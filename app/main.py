@@ -1,13 +1,30 @@
 from fastapi import FastAPI
-from sqlalchemy.orm import Session
-from sqlalchemy import text
 from fastapi import Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
+from app.api.finance import router as finance_router
+from app.api.loan_applications import router as loan_router
+from app.api.manager import router as manager_router
 from app.db.database import get_db
-from app.tasks.email_tasks import test_celery_task
+
+"""
+Main FastAPI Application
+
+This file is the main entry point of the BAW Inspired Loan Workflow API.
+
+Responsibilities:
+- Initialize FastAPI application
+- Register API routers
+- Expose health check endpoints
+- Connect all workflow modules together
+
+This application simulates an enterprise workflow automation
+system similar to IBM BAW.
+"""
 
 app = FastAPI(
-    title="BAW Loan Automation API",
+    title="BAW Inspired Loan Workflow API",
     description="A BAW-inspired enterprise loan workflow automation system.",
     version="1.0.0",
 )
@@ -26,15 +43,13 @@ def root():
 def health_check():
     return {"status": "ok"}
 
+
 @app.get("/test-db")
 def test_db(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
     return {"database": "connected"}
 
-@app.post("/test-celery")
-def test_celery():
-    task = test_celery_task.delay("Nada")
-    return {
-        "message": "Task queued",
-        "task_id": task.id,
-    }
+
+app.include_router(loan_router)
+app.include_router(manager_router)
+app.include_router(finance_router)

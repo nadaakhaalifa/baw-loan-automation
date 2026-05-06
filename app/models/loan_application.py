@@ -2,6 +2,24 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric
 from sqlalchemy.sql import func
 from app.db.database import Base
 
+"""
+Loan Application Model
+
+Represents customer loan applications stored in PostgreSQL.
+
+Each loan application is the main workflow instance and moves through states such as:
+SUBMITTED
+VALIDATING_DOCUMENTS
+MISSING_DOCUMENTS
+AUTO_APPROVED
+WAITING_MANAGER_APPROVAL
+MANAGER_APPROVED
+SENT_TO_FINANCE
+COMPLETED
+REJECTED
+
+This model is the central business object of the workflow system.
+"""
 
 class LoanApplication(Base):
     __tablename__ = "loan_applications"

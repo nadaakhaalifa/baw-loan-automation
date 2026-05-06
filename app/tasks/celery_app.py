@@ -2,6 +2,22 @@ from celery import Celery
 
 from app.core.config import settings
 
+"""
+Celery Configuration
+
+This file initializes the Celery application used for
+background task processing.
+
+Responsibilities:
+- Configure Celery workers
+- Register async task modules
+- Enable distributed background processing
+
+Used for:
+- Email processing
+- Escalation tasks
+- Delayed workflow actions
+"""
 
 celery_app = Celery(
     "baw_loan_automation",
