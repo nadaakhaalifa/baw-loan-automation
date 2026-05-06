@@ -2,6 +2,18 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from app.db.database import Base
 
+"""
+Workflow Task Model
+
+Represents workflow tasks assigned to departments
+such as managers and finance teams.
+
+Responsibilities:
+- Store task ownership
+- Track task status
+- Track pending workflow actions
+- Support approval/disbursement operations
+"""
 
 class WorkflowTask(Base):
     __tablename__ = "workflow_tasks"

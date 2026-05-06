@@ -2,6 +2,20 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from app.db.database import Base
 
+"""
+Workflow History Model
+
+Stores audit trail records for workflow state transitions.
+
+Responsibilities:
+- Track workflow actions
+- Store previous and new states
+- Record timestamps
+- Record performing actor/system
+
+Provides full workflow traceability similar
+to enterprise BPM systems.
+"""
 
 class WorkflowHistory(Base):
     __tablename__ = "workflow_history"

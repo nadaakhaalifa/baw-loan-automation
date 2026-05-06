@@ -1,5 +1,18 @@
 from pydantic_settings import BaseSettings
 
+"""
+Application Configuration
+
+Loads environment variables and application settings.
+
+Responsibilities:
+- Database configuration
+- Redis configuration
+- SMTP configuration
+- Workflow limits and timeouts
+
+Environment variables are loaded from .env file.
+"""
 
 class Settings(BaseSettings):
     DATABASE_URL: str
