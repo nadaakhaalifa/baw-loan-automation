@@ -1,0 +1,50 @@
+services:
+  api:
+    build: .
+    container_name: baw_loan_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env.docker
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    container_name: baw_loan_worker
+    command: celery -A app.tasks.celery_app.celery_app worker --loglevel=info
+    env_file:
+      - .env.docker
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:16
+    container_name: baw_loan_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: baw_loan_automation
+    ports:
+      - "5433:5432"
+    volumes:
+      - baw_loan_postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: baw_loan_redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - baw_loan_redis_data:/data
+
+volumes:
+  baw_loan_postgres_data:
+  baw_loan_redis_data:
