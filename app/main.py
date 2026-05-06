@@ -1,13 +1,3 @@
-from fastapi import FastAPI
-from fastapi import Depends
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
-from app.api.finance import router as finance_router
-from app.api.loan_applications import router as loan_router
-from app.api.manager import router as manager_router
-from app.db.database import get_db
-
 """
 Main FastAPI Application
 
@@ -22,6 +12,18 @@ Responsibilities:
 This application simulates an enterprise workflow automation
 system similar to IBM BAW.
 """
+from fastapi import FastAPI
+from fastapi import Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.api.finance import router as finance_router
+from app.api.loan_applications import router as loan_router
+from app.api.manager import router as manager_router
+from app.db.database import get_db
+from app.api.auth import router as auth_router
+from app.core.dependencies import get_current_user
+from app.models.user import User
 
 app = FastAPI(
     title="BAW Inspired Loan Workflow API",
@@ -50,6 +52,19 @@ def test_db(db: Session = Depends(get_db)):
     return {"database": "connected"}
 
 
+@app.get("/me")
+def get_me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "full_name": current_user.full_name,
+        "email": current_user.email,
+        "role": current_user.role,
+    }
+    
+    
 app.include_router(loan_router)
 app.include_router(manager_router)
 app.include_router(finance_router)
+app.include_router(auth_router)
+
+
