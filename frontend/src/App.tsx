@@ -1,11 +1,26 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
+import ManagerPage from "./pages/ManagerPage";
+import FinancePage from "./pages/FinancePage";
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-blue-600">
-        BAW Loan Workflow Frontend
-      </h1>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+
+        <Route path="/login" element={<LoginPage />} />
+
+        <Route path="/dashboard" element={<DashboardPage />} />
+
+        <Route path="/manager" element={<ManagerPage />} />
+
+        <Route path="/finance" element={<FinancePage />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
