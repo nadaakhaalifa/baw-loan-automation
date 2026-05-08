@@ -32,3 +32,5 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    phone_number = Column(String, unique=True, nullable=False)

@@ -16,6 +16,7 @@ from pydantic import BaseModel, EmailStr
 class RegisterRequest(BaseModel):
     full_name: str
     email: EmailStr
+    phone_number: str
     password: str
     role: str
 
@@ -28,3 +29,15 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class ForgotPasswordSendCodeRequest(BaseModel):
+    email: EmailStr
+    phone_number: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    phone_number: str
+    code: str
+    new_password: str

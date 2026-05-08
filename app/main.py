@@ -17,6 +17,9 @@ from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from app.api.finance import router as finance_router
 from app.api.loan_applications import router as loan_router
