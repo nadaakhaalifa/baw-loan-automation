@@ -8,6 +8,7 @@ from app.models.email_log import EmailLog
 from app.models.workflow_task import WorkflowTask
 from app.schemas.loan_application import LoanApplicationCreate
 from app.services.workflow_service import start_loan_workflow, validate_documents
+from app.services.email_service import create_email_log, send_real_email
 from app.core.dependencies import get_current_user
 from app.models.user import User
 
@@ -36,11 +37,49 @@ def create_loan_application(
     current_user: User = Depends(get_current_user),
 ):
     loan = LoanApplication(**payload.model_dump())
+
+    if not loan.customer_email:
+        loan.customer_email = current_user.email
+
     db.add(loan)
     db.commit()
     db.refresh(loan)
 
     start_loan_workflow(db, loan)
+
+    subject = "Loan Application Submitted Successfully"
+
+    body = f"""
+Hello {loan.customer_name},
+
+Your loan application has been submitted successfully.
+
+Application ID: {loan.id}
+Requested Amount: {loan.amount}
+Current Status: {loan.status}
+
+We will notify you once your application is reviewed.
+
+Best regards,
+BAW Loan Automation Team
+"""
+
+    email_sent = send_real_email(
+        to_email=loan.customer_email,
+        subject=subject,
+        body=body,
+    )
+
+    create_email_log(
+        db=db,
+        loan_application_id=loan.id,
+        to_email=loan.customer_email,
+        subject=subject,
+        body=body,
+        status="SENT" if email_sent else "FAILED",
+    )
+
+    db.refresh(loan)
 
     return loan
 
@@ -57,22 +96,33 @@ def list_loan_applications(
         LoanApplication.customer_email == current_user.email
     ).all()
 
+
 @router.get("/{loan_id}")
 def get_loan_application(loan_id: int, db: Session = Depends(get_db)):
-    loan = db.query(LoanApplication).filter(LoanApplication.id == loan_id).first()
+    loan = db.query(LoanApplication).filter(
+        LoanApplication.id == loan_id
+    ).first()
 
     if not loan:
-        raise HTTPException(status_code=404, detail="Loan application not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Loan application not found",
+        )
 
     return loan
 
 
 @router.post("/{loan_id}/resubmit-documents")
 def resubmit_documents(loan_id: int, db: Session = Depends(get_db)):
-    loan = db.query(LoanApplication).filter(LoanApplication.id == loan_id).first()
+    loan = db.query(LoanApplication).filter(
+        LoanApplication.id == loan_id
+    ).first()
 
     if not loan:
-        raise HTTPException(status_code=404, detail="Loan application not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Loan application not found",
+        )
 
     loan.documents_complete = True
     loan.status = "VALIDATING_DOCUMENTS"
@@ -89,6 +139,37 @@ def resubmit_documents(loan_id: int, db: Session = Depends(get_db)):
     validate_documents(db, loan)
     db.commit()
     db.refresh(loan)
+
+    subject = "Loan Documents Resubmitted Successfully"
+
+    body = f"""
+Hello {loan.customer_name},
+
+Your missing documents have been resubmitted successfully.
+
+Application ID: {loan.id}
+Current Status: {loan.status}
+
+We will continue processing your application.
+
+Best regards,
+BAW Loan Automation Team
+"""
+
+    email_sent = send_real_email(
+        to_email=loan.customer_email,
+        subject=subject,
+        body=body,
+    )
+
+    create_email_log(
+        db=db,
+        loan_application_id=loan.id,
+        to_email=loan.customer_email,
+        subject=subject,
+        body=body,
+        status="SENT" if email_sent else "FAILED",
+    )
 
     return loan
 

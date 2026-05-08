@@ -6,6 +6,7 @@ Handles:
 - User login
 - JWT token generation
 - Forgot password SMS verification
+- Welcome email sending
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -29,6 +30,7 @@ from app.services.sms_service import (
     send_verification_code,
     verify_code,
 )
+from app.services.email_service import send_real_email
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -68,6 +70,23 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    send_real_email(
+        to_email=user.email,
+        subject="Welcome to BAW Loan Automation",
+        body=f"""
+Hello {user.full_name},
+
+Your account has been created successfully.
+
+You can now log in to the BAW Loan Automation portal.
+
+Role: {user.role}
+
+Best regards,
+BAW Loan Automation Team
+""",
+    )
 
     return {
         "message": "User registered successfully",
@@ -111,18 +130,16 @@ def forgot_password_send_code(
     payload: ForgotPasswordSendCodeRequest,
     db: Session = Depends(get_db),
 ):
-    email = payload.email.lower().strip()
     phone_number = payload.phone_number.replace(" ", "").strip()
 
     user = db.query(User).filter(
-        User.email == email,
         User.phone_number == phone_number,
     ).first()
 
     if not user:
         raise HTTPException(
             status_code=404,
-            detail="No account found with this email and phone number.",
+            detail="No account found with this phone number.",
         )
 
     send_verification_code(phone_number)
@@ -137,18 +154,16 @@ def forgot_password_reset(
     payload: ResetPasswordRequest,
     db: Session = Depends(get_db),
 ):
-    email = payload.email.lower().strip()
     phone_number = payload.phone_number.replace(" ", "").strip()
 
     user = db.query(User).filter(
-        User.email == email,
         User.phone_number == phone_number,
     ).first()
 
     if not user:
         raise HTTPException(
             status_code=404,
-            detail="No account found with this email and phone number.",
+            detail="No account found with this phone number.",
         )
 
     is_valid = verify_code(
@@ -164,6 +179,21 @@ def forgot_password_reset(
 
     user.hashed_password = hash_password(payload.new_password)
     db.commit()
+
+    send_real_email(
+        to_email=user.email,
+        subject="Your BAW Loan Automation Password Was Reset",
+        body=f"""
+Hello {user.full_name},
+
+Your password was reset successfully.
+
+If you did not request this change, please contact your system administrator immediately.
+
+Best regards,
+BAW Loan Automation Team
+""",
+    )
 
     return {
         "message": "Password reset successfully",

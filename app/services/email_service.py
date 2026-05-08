@@ -1,9 +1,3 @@
-import smtplib
-from email.message import EmailMessage
-from sqlalchemy.orm import Session
-
-from app.core.config import settings
-from app.models.email_log import EmailLog
 
 """
 Email Service
@@ -22,10 +16,17 @@ Responsibilities:
 - Prepare notification messages
 - Support async email processing
 """
+import smtplib
+from email.message import EmailMessage
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.models.email_log import EmailLog
+
 
 def create_email_log(
     db: Session,
-    loan_application_id: int,
+    loan_application_id: int | None,
     to_email: str,
     subject: str,
     body: str,
@@ -38,15 +39,18 @@ def create_email_log(
         body=body,
         status=status,
     )
+
     db.add(email)
     db.commit()
     db.refresh(email)
+
     return email
 
 
 def send_real_email(to_email: str, subject: str, body: str):
     if not settings.SMTP_ENABLED:
-        return
+        print("SMTP is disabled. Email was not sent.")
+        return False
 
     msg = EmailMessage()
     msg["From"] = settings.EMAIL_FROM
@@ -54,7 +58,18 @@ def send_real_email(to_email: str, subject: str, body: str):
     msg["Subject"] = subject
     msg.set_content(body)
 
-    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-        server.starttls()
-        server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-        server.send_message(msg)
+    try:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            server.starttls()
+            server.login(
+                settings.SMTP_USERNAME,
+                settings.SMTP_PASSWORD,
+            )
+            server.send_message(msg)
+
+        print(f"Email sent successfully to {to_email}")
+        return True
+
+    except Exception as e:
+        print(f"Failed to send email to {to_email}: {e}")
+        return False
