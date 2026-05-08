@@ -20,6 +20,9 @@ class LoanApplicationCreate(BaseModel):
     amount: Decimal
     purpose: str | None = None
     documents_complete: bool = False
+    monthly_salary: Decimal | None = None
+    employment_type: str | None = None
+    purpose_details: str | None = None
 
 
 class ManagerDecisionRequest(BaseModel):
