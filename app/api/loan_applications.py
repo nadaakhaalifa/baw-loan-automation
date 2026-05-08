@@ -8,6 +8,8 @@ from app.models.email_log import EmailLog
 from app.models.workflow_task import WorkflowTask
 from app.schemas.loan_application import LoanApplicationCreate
 from app.services.workflow_service import start_loan_workflow, validate_documents
+from app.core.dependencies import get_current_user
+from app.models.user import User
 
 """
 Loan Applications API
@@ -28,7 +30,11 @@ router = APIRouter(prefix="/loan-applications", tags=["Loan Applications"])
 
 
 @router.post("")
-def create_loan_application(payload: LoanApplicationCreate, db: Session = Depends(get_db)):
+def create_loan_application(
+    payload: LoanApplicationCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     loan = LoanApplication(**payload.model_dump())
     db.add(loan)
     db.commit()
@@ -40,9 +46,16 @@ def create_loan_application(payload: LoanApplicationCreate, db: Session = Depend
 
 
 @router.get("")
-def list_loan_applications(db: Session = Depends(get_db)):
-    return db.query(LoanApplication).all()
+def list_loan_applications(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role == "ADMIN":
+        return db.query(LoanApplication).all()
 
+    return db.query(LoanApplication).filter(
+        LoanApplication.customer_email == current_user.email
+    ).all()
 
 @router.get("/{loan_id}")
 def get_loan_application(loan_id: int, db: Session = Depends(get_db)):
